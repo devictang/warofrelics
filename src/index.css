@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════
+   神器戰爭 — Global Styles
+   暖色 dark theme，睇落舒服
+   ═══════════════════════════════════════ */
+
+/* Custom scrollbar for combat log */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 2px;
+}
+
+/* Smooth page transitions */
+* {
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+body {
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Glow effects */
+.glow-amber {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+}
