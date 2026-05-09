@@ -33,15 +33,15 @@ export function CombatScreen({ character, enemy, onCombatEnd }: Props) {
   const canAttack = s.player.currentSp >= 1;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-4 max-w-2xl mx-auto flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-3 max-w-2xl mx-auto flex flex-col gap-2">
       {/* Title */}
-      <div className="text-center mb-3">
-        <h1 className="text-lg font-bold text-amber-400">⚔️ 戰鬥</h1>
+      <div className="text-center">
+        <h1 className="text-base font-bold text-amber-400">⚔️ 戰鬥</h1>
       </div>
 
-      {/* Enemy bar — long press to see details */}
+      {/* ── Enemy bar (long-press for details) ── */}
       <div
-        className="mb-3 cursor-pointer select-none"
+        className="cursor-pointer select-none"
         onMouseDown={() => {
           const timer = setTimeout(() => setShowEnemyInfo(true), 500);
           const cancel = () => { clearTimeout(timer); setShowEnemyInfo(false); };
@@ -55,80 +55,81 @@ export function CombatScreen({ character, enemy, onCombatEnd }: Props) {
           sp={s.enemy.currentSp} maxSp={s.enemy.maxSp}
           color="red"
         />
-        <div className="text-[10px] text-gray-500 text-right mt-0.5">長按查看詳情</div>
       </div>
 
       {/* Enemy info popup */}
       {showEnemyInfo && (
-        <div className="bg-slate-800 rounded-xl p-3 mb-3 border border-amber-500/50 text-xs space-y-1"
+        <div className="bg-slate-800 rounded-xl p-3 border border-amber-500/50 text-xs space-y-1"
           onMouseEnter={() => setShowEnemyInfo(true)}
           onMouseLeave={() => setShowEnemyInfo(false)}>
-          <div className="text-amber-400 font-bold mb-1">👹 {enemy.name} 技能</div>
+          <div className="text-amber-400 font-bold mb-1">👹 {enemy.name}</div>
           <div className="text-gray-300">
-            普攻: {enemy.damageType === 'physical' ? '物理' : '魔法'} (消耗 1 氣)
+            普攻: {enemy.damageType === 'physical' ? '⚔️物理' : '🔮魔法'} (消耗 1 氣)
           </div>
-          {enemy.skills.length === 0 ? (
-            <div className="text-gray-500">沒有特殊技能</div>
-          ) : (
-            enemy.skills.map(s => (
-              <div key={s} className="text-gray-300">• {s}</div>
-            ))
+          {enemy.skills.length > 0 && (
+            <div className="text-gray-300">技能: {enemy.skills.join(', ')}</div>
           )}
           <div className="text-gray-500 mt-1">
-            STR {enemy.stats.str} CON {enemy.stats.con} DEX {enemy.stats.dex}
-            <br />
-            INT {enemy.stats.int} PER {enemy.stats.per} WIL {enemy.stats.wil}
+            STR{enemy.stats.str} CON{enemy.stats.con} DEX{enemy.stats.dex}{' '}
+            INT{enemy.stats.int} PER{enemy.stats.per} WIL{enemy.stats.wil}
           </div>
         </div>
       )}
 
-      {/* Player bar */}
-      <div className="mb-4">
-        <StatusBar
-          label={character.name}
-          hp={s.player.currentHp} maxHp={s.player.maxHp}
-          sp={s.player.currentSp} maxSp={s.player.maxSp}
-          color="cyan"
-        />
-      </div>
+      {/* ── Player bar ── */}
+      <StatusBar
+        label={character.name}
+        hp={s.player.currentHp} maxHp={s.player.maxHp}
+        sp={s.player.currentSp} maxSp={s.player.maxSp}
+        color="cyan"
+      />
 
-      {/* 氣力提示 */}
-      <div className="text-center text-[10px] text-gray-500 mb-3">
-        ⚔️-1氣 &nbsp;|&nbsp; 🛡️免費 &nbsp;|&nbsp; 🌀+1氣 &nbsp;|&nbsp; 上限10
-      </div>
-
-      {/* Combat log with auto-scroll */}
-      <div className="flex-1 max-h-48 overflow-y-auto mb-4 scrollbar-thin">
+      {/* ── Combat log ── */}
+      <div className="flex-1 max-h-40 overflow-y-auto scrollbar-thin bg-slate-900/40 rounded-xl p-2">
         <CombatLogView log={s.log} />
       </div>
 
-      {/* ═══ 6 圓形行動按鈕 ═══ */}
+      {/* ═══ 行動按鈕 ═══ */}
       {!s.battleOver && (
-        <div className="grid grid-cols-3 gap-4 justify-items-center">
-          {/* Row 1: Attack | Block | End Turn */}
-          <CircleBtn
-            label="攻擊" icon="⚔️" sub="1氣"
-            active={canAttack}
-            disabled={animating || !canAttack}
-            onClick={() => handleAction('attack')}
-          />
-          <CircleBtn
-            label="格擋" icon="🛡️" sub="免費"
-            active={true}
-            disabled={animating}
-            onClick={() => handleAction('block')}
-          />
-          <CircleBtn
-            label="結束回合" icon="🌀" sub="+1氣"
-            active={true}
-            disabled={animating}
-            onClick={() => handleAction('recover')}
-          />
+        <div className="flex flex-col gap-2 mt-auto">
+          {/* Row 1: 攻擊 | 格擋 | 物品 */}
+          <div className="grid grid-cols-3 gap-3 justify-items-center">
+            <CircleBtn
+              label="攻擊" icon="⚔️" sub="1氣"
+              active={canAttack}
+              disabled={animating || !canAttack}
+              onClick={() => handleAction('attack')}
+            />
+            <CircleBtn
+              label="格擋" icon="🛡️" sub="免費"
+              active={true}
+              disabled={animating}
+              onClick={() => handleAction('block')}
+            />
+            <CircleBtn
+              label="物品" icon="🧪" sub="無"
+              active={false} locked
+            />
+          </div>
 
-          {/* Row 2: Skill 1 | Skill 2 | Skill 3 (locked) */}
-          <CircleBtn label="招式" icon="🔒" sub="未解鎖" active={false} locked />
-          <CircleBtn label="招式" icon="🔒" sub="未解鎖" active={false} locked />
-          <CircleBtn label="招式" icon="🔒" sub="未解鎖" active={false} locked />
+          {/* Row 2: 招式1 | 招式2 | 招式3 */}
+          <div className="grid grid-cols-3 gap-3 justify-items-center">
+            <CircleBtn label="招式" icon="🔒" sub="未解鎖" active={false} locked />
+            <CircleBtn label="招式" icon="🔒" sub="未解鎖" active={false} locked />
+            <CircleBtn label="招式" icon="🔒" sub="未解鎖" active={false} locked />
+          </div>
+
+          {/* End Turn — highlighted rectangle */}
+          <button
+            onClick={() => handleAction('recover')}
+            disabled={animating}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500
+              hover:from-amber-500 hover:to-amber-400 active:scale-[0.98]
+              font-bold text-sm tracking-wider shadow-lg shadow-amber-500/20
+              transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            🌀 結束回合  ·  氣力 +1
+          </button>
         </div>
       )}
 
@@ -159,13 +160,13 @@ function CircleBtn({ label, icon, sub, active, disabled, locked, onClick }: {
       onClick={onClick}
       disabled={disabled}
       className={`
-        w-[68px] h-[68px] rounded-full flex flex-col items-center justify-center
+        w-[66px] h-[66px] rounded-full flex flex-col items-center justify-center
         transition-all duration-150 select-none
         ${locked
-          ? 'bg-slate-800/30 text-gray-600 cursor-default border-2 border-slate-700/30'
+          ? 'bg-slate-800/20 text-gray-600 cursor-default border-2 border-slate-700/20'
           : active
             ? 'bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-amber-500/50 active:scale-90 cursor-pointer shadow-lg shadow-black/30'
-            : 'bg-slate-800/40 text-gray-600 cursor-not-allowed border-2 border-slate-700/40'
+            : 'bg-slate-800/30 text-gray-500 cursor-not-allowed border-2 border-slate-700/30'
         }
       `}
     >
@@ -178,14 +179,13 @@ function CircleBtn({ label, icon, sub, active, disabled, locked, onClick }: {
   );
 }
 
-/* ── 狀態欄（HP + 氣力）── */
+/* ── 狀態欄 ── */
 function StatusBar({ label, hp, maxHp, sp, maxSp, color }: {
   label: string; hp: number; maxHp: number; sp: number; maxSp: number; color: string;
 }) {
   const hpPct = Math.max(0, (hp / maxHp) * 100);
   const spPct = Math.max(0, (sp / maxSp) * 100);
   const barColor = color === 'cyan' ? 'bg-cyan-500' : 'bg-red-500';
-  const spColor = 'bg-yellow-400';
   return (
     <div className="bg-slate-800/60 rounded-xl px-3 py-2 border border-slate-700/50">
       <div className="flex items-center justify-between mb-1">
@@ -201,7 +201,7 @@ function StatusBar({ label, hp, maxHp, sp, maxSp, color }: {
         <span className="text-yellow-300 text-xs font-mono font-bold">{sp}/{maxSp}</span>
       </div>
       <div className="h-2 bg-slate-900 rounded-full overflow-hidden border border-yellow-600/20">
-        <div className={`h-full ${spColor} transition-all duration-300 rounded-full`}
+        <div className="h-full bg-yellow-400 transition-all duration-300 rounded-full"
           style={{ width: `${spPct}%` }} />
       </div>
     </div>
