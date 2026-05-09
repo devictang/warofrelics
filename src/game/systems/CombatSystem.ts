@@ -27,31 +27,43 @@ function calcPhysicalDamage(attackerStr: number, mult: number = 1.0): number {
 function calcMagicalDamage(attackerInt: number, mult: number = 1.0): number {
   return Math.max(1, Math.floor(attackerInt * 3 * mult));
 }
-
-/** AI 決定行動 */
+/** AI 決定行動 — 遵從氣力限制 */
 export function decideEnemyAction(enemy: Enemy): Action {
   const tend = enemy.ai.tendencies;
+  // Check HP threshold
+  let activeTend = tend;
   if (enemy.ai.hpLowThreshold && enemy.currentHp < enemy.maxHp * enemy.ai.hpLowThreshold) {
     const lowTend = enemy.ai.hpLowBehavior!;
-    const merged = {
+    activeTend = {
       attack: lowTend.attack ?? tend.attack,
       block: lowTend.block ?? tend.block,
       skill: lowTend.skill ?? tend.skill,
       recover: lowTend.recover ?? tend.recover,
     };
-    return pickFromTendencies(merged);
   }
-  return pickFromTendencies(tend);
-}
 
-function pickFromTendencies(tend: { attack: number; block: number; skill: number; recover: number }): Action {
-  const total = tend.attack + tend.block + tend.skill + tend.recover;
+  // Filter by 氣力: attack/skill cost 1, block/recover free
+  const options: { action: Action; weight: number }[] = [];
+  if (enemy.currentSp >= 1) {
+    options.push({ action: 'attack', weight: activeTend.attack });
+  }
+  if (enemy.currentSp >= 1) {
+    // In future: check skill cost separately
+    options.push({ action: 'skill1', weight: activeTend.skill });
+  }
+  options.push({ action: 'block', weight: activeTend.block });
+  options.push({ action: 'recover', weight: activeTend.recover });
+
+  const total = options.reduce((s, o) => s + o.weight, 0);
+  if (total <= 0) return 'block';
+
   const roll = Math.random() * total;
   let cum = 0;
-  cum += tend.attack; if (roll < cum) return 'attack';
-  cum += tend.block; if (roll < cum) return 'block';
-  cum += tend.skill; if (roll < cum) return 'skill1';
-  return 'recover';
+  for (const opt of options) {
+    cum += opt.weight;
+    if (roll < cum) return opt.action;
+  }
+  return 'block';
 }
 
 export interface CombatState {
