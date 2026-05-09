@@ -68,37 +68,10 @@ export function CombatLogView({ log }: { log: CombatLogTurn[] }) {
               </div>
             ))}
           </div>
-
-          <div className="grid grid-cols-2 gap-3 mt-3 text-xs">
-            <MiniStatus label="你" hp={turn.playerHpAfter} hpMax={turn.playerHpMax}
-              sp={turn.playerSpAfter} spMax={10} color="cyan" />
-            <MiniStatus label={turn.enemyHpAfter === 0 ? '💀' : ''} hp={turn.enemyHpAfter} hpMax={turn.enemyHpMax}
-              sp={turn.enemySpAfter} spMax={10} color="red" />
-          </div>
         </div>
       ))}
       {/* Invisible anchor for auto-scroll */}
       <div ref={bottomRef} />
-    </div>
-  );
-}
-
-function MiniStatus({ label, hp, hpMax, sp, spMax, color }: {
-  label: string; hp: number; hpMax: number; sp: number; spMax: number; color: string;
-}) {
-  const hpPct = Math.max(0, Math.min(100, (hp / hpMax) * 100));
-  const spPct = Math.max(0, Math.min(100, (sp / spMax) * 100));
-  const barColor = color === 'cyan' ? 'bg-cyan-500' : 'bg-red-500';
-  return (
-    <div>
-      <div className="text-gray-400 mb-0.5">{label} HP {hp}/{hpMax}</div>
-      <div className="h-2 bg-slate-900 rounded-full mb-1 overflow-hidden">
-        <div className={`h-full ${barColor} transition-all duration-300`} style={{ width: `${hpPct}%` }} />
-      </div>
-      <div className="text-yellow-300 mb-0.5">✦ 氣力 {sp}/{spMax}</div>
-      <div className="h-2 bg-slate-900 rounded-full overflow-hidden border border-yellow-600/20">
-        <div className="h-full bg-yellow-400 transition-all duration-300" style={{ width: `${spPct}%` }} />
-      </div>
     </div>
   );
 }
