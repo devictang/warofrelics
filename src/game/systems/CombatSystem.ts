@@ -96,20 +96,39 @@ export function resolveTurn(state: CombatState, playerAction: Action): CombatSta
   let eHp = state.enemy.currentHp;
   let eSp = state.enemy.currentSp;
 
-  // ── 1. 氣力：只有 Recover 先回 1 氣 ──
+  // ── 1. 氣力：Recover +1, 攻擊/技能 -1, 格擋免費 ──
   if (playerAction === 'recover') {
     pSp = Math.min(MAX_SP, pSp + 1);
     resolutions.push({
       type: 'recover', target: 'player', value: 1,
       description: `你結束回合回氣！氣力 +1 🌀 (${pSp - 1} → ${pSp}/${MAX_SP})`,
     });
+  } else if (playerAction === 'attack' || playerAction.startsWith('skill')) {
+    const cost = 1;
+    if (pSp >= cost) {
+      pSp -= cost;
+      resolutions.push({
+        type: 'recover', target: 'player', value: -cost,
+        description: `消耗 ${cost} 氣力 ⚡ (${pSp + cost} → ${pSp}/${MAX_SP})`,
+      });
+    } else {
+      // Not enough 氣力 — attack still goes through but no cost
+      // (UI should prevent this, but defensive coding)
+    }
   }
+  // Block: no cost
+
   if (enemyAction === 'recover') {
     eSp = Math.min(MAX_SP, eSp + 1);
     resolutions.push({
       type: 'recover', target: 'enemy', value: 1,
       description: `${state.enemy.name}結束回合回氣，氣力 +1 🌀`,
     });
+  } else if (enemyAction === 'attack' || enemyAction.startsWith('skill')) {
+    const cost = 1;
+    if (eSp >= cost) {
+      eSp -= cost;
+    }
   }
 
   // ── 2. 格擋判定 ──

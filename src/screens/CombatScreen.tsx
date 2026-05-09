@@ -29,6 +29,8 @@ export function CombatScreen({ character, enemy, onCombatEnd }: Props) {
   }
 
   const s = state;
+  const canAttack = s.player.currentSp >= 1;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-4 max-w-2xl mx-auto">
       {/* Title */}
@@ -37,7 +39,7 @@ export function CombatScreen({ character, enemy, onCombatEnd }: Props) {
         <div className="text-sm text-gray-400">{enemy.name} Lv.{enemy.level}</div>
       </div>
 
-      {/* Status bars — 氣力顯示喺 HP 下面 */}
+      {/* Status bars */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         <StatusPanel
           label={character.name}
@@ -55,10 +57,10 @@ export function CombatScreen({ character, enemy, onCombatEnd }: Props) {
 
       {/* 氣力博弈提示 */}
       <div className="text-center text-xs text-gray-500 mb-3">
-        攻擊/格擋/出招唔回氣 · 結束回合回 1 氣 · 上限 10
+        ⚔️攻擊-1 · 🛡️格擋免費 · 🌀結束回合+1 · 上限10
       </div>
 
-      {/* Combat log */}
+      {/* Combat log — auto-scroll to bottom */}
       <div className="max-h-72 overflow-y-auto mb-4 space-y-2 scrollbar-thin">
         <CombatLogView log={s.log} />
       </div>
@@ -66,9 +68,24 @@ export function CombatScreen({ character, enemy, onCombatEnd }: Props) {
       {/* Actions */}
       {!s.battleOver && (
         <div className="grid grid-cols-3 gap-2">
-          <ActionBtn label="⚔️ 攻擊" desc="STR 物理傷害" onClick={() => handleAction('attack')} disabled={animating} />
-          <ActionBtn label="🛡️ 格擋" desc="DEX vs 敵STR" onClick={() => handleAction('block')} disabled={animating} />
-          <ActionBtn label="🌀 結束回合" desc="氣力 +1" onClick={() => handleAction('recover')} disabled={animating} />
+          <ActionBtn
+            label="⚔️ 攻擊"
+            desc={canAttack ? '消耗 1 氣 ⚡' : '氣力不足 ❌'}
+            onClick={() => handleAction('attack')}
+            disabled={animating || !canAttack}
+          />
+          <ActionBtn
+            label="🛡️ 格擋"
+            desc="免費"
+            onClick={() => handleAction('block')}
+            disabled={animating}
+          />
+          <ActionBtn
+            label="🌀 結束回合"
+            desc="氣力 +1"
+            onClick={() => handleAction('recover')}
+            disabled={animating}
+          />
         </div>
       )}
 
@@ -98,12 +115,10 @@ function StatusPanel({ label, hp, maxHp, sp, maxSp, color }: {
   return (
     <div className="bg-slate-800/60 rounded-xl p-3 border border-slate-700/50">
       <div className="font-bold text-sm mb-1">{label}</div>
-      {/* HP */}
       <div className="text-xs text-gray-400 mb-0.5">HP {hp}/{maxHp}</div>
       <div className="h-2 bg-slate-900 rounded-full mb-2 overflow-hidden">
         <div className={`h-full ${barColor} transition-all duration-300`} style={{ width: `${hpPct}%` }} />
       </div>
-      {/* 氣力 — 更突出顯示 */}
       <div className="flex items-center justify-between text-xs mb-0.5">
         <span className="text-yellow-300 font-bold">✦ 氣力</span>
         <span className="text-yellow-300 font-mono font-bold">{sp}/{maxSp}</span>
@@ -111,7 +126,6 @@ function StatusPanel({ label, hp, maxHp, sp, maxSp, color }: {
       <div className="h-3 bg-slate-900 rounded-full overflow-hidden border border-yellow-600/30">
         <div className={`h-full ${spBarColor} transition-all duration-300`} style={{ width: `${spPct}%` }} />
       </div>
-      {/* 氣力格數指示 */}
       <div className="flex gap-0.5 mt-1">
         {Array.from({ length: maxSp }, (_, i) => (
           <div key={i} className={`h-1 flex-1 rounded-sm ${i < sp ? spBarColor : 'bg-slate-700'}`} />
@@ -128,11 +142,11 @@ function ActionBtn({ label, desc, onClick, disabled }: {
     <button onClick={onClick} disabled={disabled}
       className={`p-3 rounded-xl text-center transition-all duration-150
         ${disabled
-          ? 'bg-slate-800 text-gray-500 cursor-not-allowed'
+          ? 'bg-slate-800/40 text-gray-600 cursor-not-allowed'
           : 'bg-slate-800 hover:bg-slate-700 hover:border-amber-500/50 border border-slate-600/50 active:scale-95'
         }`}>
       <div className="text-lg">{label}</div>
-      <div className="text-xs text-gray-400 mt-1">{desc}</div>
+      <div className="text-xs mt-1">{disabled ? '🚫 ' : ''}{desc}</div>
     </button>
   );
 }

@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react';
 import type { CombatLogTurn } from '../game/engine/CombatLog';
 
 function actionLabel(a: string): string {
@@ -10,6 +11,13 @@ function actionLabel(a: string): string {
 }
 
 export function CombatLogView({ log }: { log: CombatLogTurn[] }) {
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to latest turn
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [log.length]);
+
   if (log.length === 0) {
     return (
       <div className="text-center text-gray-500 text-sm py-8">
@@ -26,7 +34,6 @@ export function CombatLogView({ log }: { log: CombatLogTurn[] }) {
             ── 回合 {turn.turnNumber} ──
           </div>
 
-          {/* Actions reveal */}
           <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
             <div className="bg-slate-900/60 rounded-lg p-2">
               <span className="text-cyan-300">你</span> 選擇了 {actionLabel(turn.playerAction)}
@@ -36,7 +43,6 @@ export function CombatLogView({ log }: { log: CombatLogTurn[] }) {
             </div>
           </div>
 
-          {/* Resolutions */}
           <div className="space-y-2">
             {turn.resolutions.map((res, i) => (
               <div key={i} className="text-sm">
@@ -63,7 +69,6 @@ export function CombatLogView({ log }: { log: CombatLogTurn[] }) {
             ))}
           </div>
 
-          {/* HP + 氣力 bars */}
           <div className="grid grid-cols-2 gap-3 mt-3 text-xs">
             <MiniStatus label="你" hp={turn.playerHpAfter} hpMax={turn.playerHpMax}
               sp={turn.playerSpAfter} spMax={10} color="cyan" />
@@ -72,6 +77,8 @@ export function CombatLogView({ log }: { log: CombatLogTurn[] }) {
           </div>
         </div>
       ))}
+      {/* Invisible anchor for auto-scroll */}
+      <div ref={bottomRef} />
     </div>
   );
 }
