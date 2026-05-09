@@ -4,7 +4,7 @@ function actionLabel(a: string): string {
   const map: Record<string, string> = {
     attack: '⚔️ 攻擊', block: '🛡️ 格擋',
     skill1: '🔥 招式', skill2: '🔥 招式', skill3: '🔥 招式',
-    recover: '🌀 回氣',
+    recover: '🌀 結束回合',
   };
   return map[a] ?? a;
 }

@@ -55,7 +55,7 @@ export function CombatScreen({ character, enemy, onCombatEnd }: Props) {
 
       {/* 氣力博弈提示 */}
       <div className="text-center text-xs text-gray-500 mb-3">
-        每回合自動 +1 氣力 · 回氣額外 +3 · 上限 10
+        攻擊/格擋/出招唔回氣 · 結束回合回 1 氣 · 上限 10
       </div>
 
       {/* Combat log */}
@@ -68,7 +68,7 @@ export function CombatScreen({ character, enemy, onCombatEnd }: Props) {
         <div className="grid grid-cols-3 gap-2">
           <ActionBtn label="⚔️ 攻擊" desc="STR 物理傷害" onClick={() => handleAction('attack')} disabled={animating} />
           <ActionBtn label="🛡️ 格擋" desc="DEX vs 敵STR" onClick={() => handleAction('block')} disabled={animating} />
-          <ActionBtn label="🌀 回氣" desc={`氣力 +${3 + 1}（含自動+1）`} onClick={() => handleAction('recover')} disabled={animating} />
+          <ActionBtn label="🌀 結束回合" desc="氣力 +1" onClick={() => handleAction('recover')} disabled={animating} />
         </div>
       )}
 

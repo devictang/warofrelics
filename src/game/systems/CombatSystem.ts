@@ -10,8 +10,8 @@ import { getClass } from '../data/classes/classes';
 import type { ClassDef } from '../data/classes/classes';
 
 export const MAX_SP = 10;
-export const AUTO_SP_PER_TURN = 1;
-export const RECOVER_BONUS_SP = 3;
+export const AUTO_SP_PER_TURN = 0;  // 唔會自動回氣
+export const RECOVER_BONUS_SP = 1;  // 只有直接 end turn 先回 1 氣
 
 /** 基礎 HP 計算 */
 export function calcMaxHp(stats: Stats, classDef: ClassDef): number {
@@ -92,34 +92,23 @@ export function resolveTurn(state: CombatState, playerAction: Action): CombatSta
   const eStats = state.enemy.stats;
 
   let pHp = state.player.currentHp;
-  let pSp = Math.min(MAX_SP, state.player.currentSp + AUTO_SP_PER_TURN);
+  let pSp = state.player.currentSp;
   let eHp = state.enemy.currentHp;
-  let eSp = Math.min(MAX_SP, state.enemy.currentSp + AUTO_SP_PER_TURN);
+  let eSp = state.enemy.currentSp;
 
-  resolutions.push({
-    type: 'recover', target: 'player', value: AUTO_SP_PER_TURN,
-    description: `氣力自動恢復 +${AUTO_SP_PER_TURN} ✨ (${pSp - AUTO_SP_PER_TURN} → ${pSp})`,
-  });
-  resolutions.push({
-    type: 'recover', target: 'enemy', value: AUTO_SP_PER_TURN,
-    description: `${state.enemy.name} 氣力自動恢復 +${AUTO_SP_PER_TURN}`,
-  });
-
-  // ── 1. RECOVER action — bonus 氣力 ──
+  // ── 1. 氣力：只有 Recover 先回 1 氣 ──
   if (playerAction === 'recover') {
-    const gain = RECOVER_BONUS_SP;
-    pSp = Math.min(MAX_SP, pSp + gain);
+    pSp = Math.min(MAX_SP, pSp + 1);
     resolutions.push({
-      type: 'recover', target: 'player', value: gain,
-      description: `你選擇回氣！氣力額外 +${gain} 🌀 (總計 ${pSp}/${MAX_SP})`,
+      type: 'recover', target: 'player', value: 1,
+      description: `你結束回合回氣！氣力 +1 🌀 (${pSp - 1} → ${pSp}/${MAX_SP})`,
     });
   }
   if (enemyAction === 'recover') {
-    const gain = RECOVER_BONUS_SP;
-    eSp = Math.min(MAX_SP, eSp + gain);
+    eSp = Math.min(MAX_SP, eSp + 1);
     resolutions.push({
-      type: 'recover', target: 'enemy', value: gain,
-      description: `${state.enemy.name}選擇回氣，氣力額外 +${gain} 🌀`,
+      type: 'recover', target: 'enemy', value: 1,
+      description: `${state.enemy.name}結束回合回氣，氣力 +1 🌀`,
     });
   }
 
