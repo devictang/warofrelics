@@ -20,10 +20,10 @@ export const CONTEST_BASE_RATES: Record<ContestType, number> = {
 
 /** 每種對抗的 stat 倍率（每點 stat = x% difference） */
 export const CONTEST_FACTORS: Record<ContestType, number> = {
-  physical_block: 5,
-  magical_block: 5,
-  status_effect: 5,
-  critical_hit: 3,
+  physical_block: 2,
+  magical_block: 2,
+  status_effect: 2,
+  critical_hit: 2,
 };
 
 /** TN cap */

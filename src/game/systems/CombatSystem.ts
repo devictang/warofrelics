@@ -1,19 +1,21 @@
 /* ═══════════════════════════════════════
    神器戰爭 — 同時出招 Combat Resolver
+   氣力 system: 0起步，每回合+1，上限10
    ═══════════════════════════════════════ */
 
 import type { Action, Character, Enemy, Stats } from '../entities/Stats';
 import type { CombatLog, CombatLogTurn, CombatLogResolution } from '../engine/CombatLog';
-import { resolvePhysicalBlock, resolveMagicalBlock, resolveCrit } from '../data/formulas/combat';
+import { resolvePhysicalBlock, resolveCrit } from '../data/formulas/combat';
 import { getClass } from '../data/classes/classes';
 import type { ClassDef } from '../data/classes/classes';
 
-/** 基礎 HP/SP 計算 */
+export const MAX_SP = 10;
+export const AUTO_SP_PER_TURN = 1;
+export const RECOVER_BONUS_SP = 3;
+
+/** 基礎 HP 計算 */
 export function calcMaxHp(stats: Stats, classDef: ClassDef): number {
   return Math.floor((50 + stats.con * 8) * classDef.hpMult);
-}
-export function calcMaxSp(stats: Stats, classDef: ClassDef): number {
-  return Math.floor((20 + stats.wil * 4) * classDef.spMult);
 }
 
 /** 物理傷害 */
@@ -29,7 +31,6 @@ function calcMagicalDamage(attackerInt: number, mult: number = 1.0): number {
 /** AI 決定行動 */
 export function decideEnemyAction(enemy: Enemy): Action {
   const tend = enemy.ai.tendencies;
-  // Check HP threshold behavior
   if (enemy.ai.hpLowThreshold && enemy.currentHp < enemy.maxHp * enemy.ai.hpLowThreshold) {
     const lowTend = enemy.ai.hpLowBehavior!;
     const merged = {
@@ -62,21 +63,20 @@ export interface CombatState {
   playerWon: boolean;
 }
 
-/** 初始化戰鬥 */
+/** 初始化戰鬥 — 0 氣力起步 */
 export function initCombat(playerChar: Character, enemy: Enemy): CombatState {
   const classDef = getClass(playerChar.classId);
   const maxHp = calcMaxHp(playerChar.runData!.stats, classDef);
-  const maxSp = calcMaxSp(playerChar.runData!.stats, classDef);
 
   return {
     player: {
       currentHp: maxHp,
       maxHp,
-      currentSp: maxSp,
-      maxSp,
+      currentSp: 0,
+      maxSp: MAX_SP,
       stats: playerChar.runData!.stats,
     },
-    enemy: { ...enemy },
+    enemy: { ...enemy, currentSp: 0 },
     turnNumber: 0,
     log: [],
     battleOver: false,
@@ -92,44 +92,50 @@ export function resolveTurn(state: CombatState, playerAction: Action): CombatSta
   const eStats = state.enemy.stats;
 
   let pHp = state.player.currentHp;
-  let pSp = state.player.currentSp;
+  let pSp = Math.min(MAX_SP, state.player.currentSp + AUTO_SP_PER_TURN);
   let eHp = state.enemy.currentHp;
-  let eSp = state.enemy.currentSp;
+  let eSp = Math.min(MAX_SP, state.enemy.currentSp + AUTO_SP_PER_TURN);
 
-  // ── Resolve simultaneously ──
-  // 1. RECOVER actions (always succeed)
+  resolutions.push({
+    type: 'recover', target: 'player', value: AUTO_SP_PER_TURN,
+    description: `氣力自動恢復 +${AUTO_SP_PER_TURN} ✨ (${pSp - AUTO_SP_PER_TURN} → ${pSp})`,
+  });
+  resolutions.push({
+    type: 'recover', target: 'enemy', value: AUTO_SP_PER_TURN,
+    description: `${state.enemy.name} 氣力自動恢復 +${AUTO_SP_PER_TURN}`,
+  });
+
+  // ── 1. RECOVER action — bonus 氣力 ──
   if (playerAction === 'recover') {
-    pSp = Math.min(state.player.maxSp, pSp + 8 + Math.floor(pStats.wil * 0.5));
+    const gain = RECOVER_BONUS_SP;
+    pSp = Math.min(MAX_SP, pSp + gain);
     resolutions.push({
-      type: 'recover', target: 'player', value: pSp - state.player.currentSp,
-      description: `你選擇回氣，恢復了 SP ✨`,
+      type: 'recover', target: 'player', value: gain,
+      description: `你選擇回氣！氣力額外 +${gain} 🌀 (總計 ${pSp}/${MAX_SP})`,
     });
   }
   if (enemyAction === 'recover') {
-    eSp = Math.min(state.enemy.maxSp, eSp + 8 + Math.floor(eStats.wil * 0.5));
+    const gain = RECOVER_BONUS_SP;
+    eSp = Math.min(MAX_SP, eSp + gain);
     resolutions.push({
-      type: 'recover', target: 'enemy', value: eSp - state.enemy.currentSp,
-      description: `${state.enemy.name}選擇回氣，恢復了 SP ✨`,
+      type: 'recover', target: 'enemy', value: gain,
+      description: `${state.enemy.name}選擇回氣，氣力額外 +${gain} 🌀`,
     });
   }
 
-  // 2. Check BLOCK for both sides
+  // ── 2. 格擋判定 ──
   const playerBlocked = playerAction === 'block';
   const enemyBlocked = enemyAction === 'block';
 
-  // 3. Player attacks or uses skill
+  // ── 3. 玩家攻擊/技能 ──
   if (!playerBlocked && playerAction !== 'recover') {
-    const isSkill = playerAction.startsWith('skill');
-    const isPhysical = state.enemy.damageType === 'physical' || !isSkill;
+    const isPhysical = true; // default all attacks are physical for now
     const baseDmg = isPhysical
       ? calcPhysicalDamage(pStats.str, 1.0)
       : calcMagicalDamage(pStats.int, 1.0);
 
     if (enemyBlocked) {
-      // Enemy tries to block
-      const blockResult = isPhysical
-        ? resolvePhysicalBlock(eStats.dex, pStats.str)
-        : resolveMagicalBlock(eStats.per, pStats.int);
+      const blockResult = resolvePhysicalBlock(eStats.dex, pStats.str);
       resolutions.push({
         type: 'block', target: 'enemy', value: 0,
         contestResult: blockResult,
@@ -156,7 +162,7 @@ export function resolveTurn(state: CombatState, playerAction: Action): CombatSta
     }
   }
 
-  // 4. Enemy attacks or uses skill
+  // ── 4. 敵人攻擊/技能 ──
   if (!enemyBlocked && enemyAction !== 'recover') {
     const isEnemyPhysical = state.enemy.damageType === 'physical';
     const baseDmg = isEnemyPhysical
@@ -164,10 +170,7 @@ export function resolveTurn(state: CombatState, playerAction: Action): CombatSta
       : calcMagicalDamage(eStats.int, state.enemy.intMult ?? 1.0);
 
     if (playerBlocked) {
-      // Player tries to block
-      const blockResult = isEnemyPhysical
-        ? resolvePhysicalBlock(pStats.dex, eStats.str)
-        : resolveMagicalBlock(pStats.per, eStats.int);
+      const blockResult = resolvePhysicalBlock(pStats.dex, eStats.str);
       resolutions.push({
         type: 'block', target: 'player', value: 0,
         contestResult: blockResult,
@@ -187,17 +190,14 @@ export function resolveTurn(state: CombatState, playerAction: Action): CombatSta
       }
     } else {
       pHp -= baseDmg;
-      // Check if player was recovering
-      const wasRecovering = playerAction === 'recover';
       resolutions.push({
         type: 'damage', target: 'player', value: baseDmg,
-        description: `${wasRecovering ? '你在回氣中暴露弱點！' : ''}你受到了 ${baseDmg} 點傷害 💥`,
+        description: `你受到了 ${baseDmg} 點傷害 💥`,
       });
     }
   }
 
-  // 5. Check for crits on successful hits
-  // (simplified: only check if player dealt damage)
+  // ── 5. 暴擊判定 ──
   const lastPlayerDmg = resolutions.find(r => r.target === 'enemy' && r.type === 'damage');
   if (lastPlayerDmg && lastPlayerDmg.value > 0) {
     const critResult = resolveCrit(pStats.lck, eStats.lck);
@@ -212,9 +212,11 @@ export function resolveTurn(state: CombatState, playerAction: Action): CombatSta
     }
   }
 
-  // Clamp HP/SP
+  // Clamp
   pHp = Math.max(0, Math.min(state.player.maxHp, pHp));
   eHp = Math.max(0, Math.min(state.enemy.maxHp, eHp));
+  pSp = Math.max(0, Math.min(MAX_SP, pSp));
+  eSp = Math.max(0, Math.min(MAX_SP, eSp));
 
   const turnResult: CombatLogTurn = {
     turnNumber: state.turnNumber + 1,
@@ -230,7 +232,6 @@ export function resolveTurn(state: CombatState, playerAction: Action): CombatSta
     flavorText: '',
   };
 
-  // Check battle over
   const battleOver = pHp <= 0 || eHp <= 0;
   const playerWon = eHp <= 0;
 
@@ -239,7 +240,7 @@ export function resolveTurn(state: CombatState, playerAction: Action): CombatSta
       currentHp: pHp,
       maxHp: state.player.maxHp,
       currentSp: pSp,
-      maxSp: state.player.maxSp,
+      maxSp: MAX_SP,
       stats: pStats,
     },
     enemy: { ...state.enemy, currentHp: eHp, currentSp: eSp },

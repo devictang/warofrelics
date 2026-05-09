@@ -3,7 +3,7 @@ import type { RaceId, ClassId, Character } from '../game/entities/Stats';
 import { DEFAULT_STATS } from '../game/entities/Stats';
 import { RACE_LIST, getRace } from '../game/data/races/races';
 import { CLASS_LIST, getClass } from '../game/data/classes/classes';
-import { calcMaxHp, calcMaxSp } from '../game/systems/CombatSystem';
+import { calcMaxHp } from '../game/systems/CombatSystem';
 
 interface Props {
   onCharacterReady: (char: Character) => void;
@@ -19,7 +19,6 @@ export function MetaProgressionScreen({ onCharacterReady }: Props) {
     const cls = getClass(selectedClass!);
     const stats = { ...DEFAULT_STATS };
     const maxHp = calcMaxHp(stats, cls);
-    const maxSp = calcMaxSp(stats, cls);
     return {
       id,
       name: `冒險者`,
@@ -33,8 +32,8 @@ export function MetaProgressionScreen({ onCharacterReady }: Props) {
         xp: 0,
         currentHp: maxHp,
         maxHp,
-        currentSp: maxSp,
-        maxSp,
+        currentSp: 0,
+        maxSp: 10,
         stats,
         relicId: null,
         skills: [],

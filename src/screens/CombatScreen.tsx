@@ -37,16 +37,29 @@ export function CombatScreen({ character, enemy, onCombatEnd }: Props) {
         <div className="text-sm text-gray-400">{enemy.name} Lv.{enemy.level}</div>
       </div>
 
-      {/* Status bars */}
+      {/* Status bars — 氣力顯示喺 HP 下面 */}
       <div className="grid grid-cols-2 gap-4 mb-4">
-        <StatusPanel label={character.name} hp={s.player.currentHp} maxHp={s.player.maxHp}
-          sp={s.player.currentSp} maxSp={s.player.maxSp} color="cyan" />
-        <StatusPanel label={enemy.name} hp={s.enemy.currentHp} maxHp={s.enemy.maxHp}
-          sp={s.enemy.currentSp} maxSp={s.enemy.maxSp} color="red" />
+        <StatusPanel
+          label={character.name}
+          hp={s.player.currentHp} maxHp={s.player.maxHp}
+          sp={s.player.currentSp} maxSp={s.player.maxSp}
+          color="cyan"
+        />
+        <StatusPanel
+          label={enemy.name}
+          hp={s.enemy.currentHp} maxHp={s.enemy.maxHp}
+          sp={s.enemy.currentSp} maxSp={s.enemy.maxSp}
+          color="red"
+        />
+      </div>
+
+      {/* 氣力博弈提示 */}
+      <div className="text-center text-xs text-gray-500 mb-3">
+        每回合自動 +1 氣力 · 回氣額外 +3 · 上限 10
       </div>
 
       {/* Combat log */}
-      <div className="max-h-80 overflow-y-auto mb-4 space-y-2 scrollbar-thin">
+      <div className="max-h-72 overflow-y-auto mb-4 space-y-2 scrollbar-thin">
         <CombatLogView log={s.log} />
       </div>
 
@@ -55,7 +68,7 @@ export function CombatScreen({ character, enemy, onCombatEnd }: Props) {
         <div className="grid grid-cols-3 gap-2">
           <ActionBtn label="⚔️ 攻擊" desc="STR 物理傷害" onClick={() => handleAction('attack')} disabled={animating} />
           <ActionBtn label="🛡️ 格擋" desc="DEX vs 敵STR" onClick={() => handleAction('block')} disabled={animating} />
-          <ActionBtn label="🔄 回氣" desc="恢復 SP" onClick={() => handleAction('recover')} disabled={animating} />
+          <ActionBtn label="🌀 回氣" desc={`氣力 +${3 + 1}（含自動+1）`} onClick={() => handleAction('recover')} disabled={animating} />
         </div>
       )}
 
@@ -81,16 +94,28 @@ function StatusPanel({ label, hp, maxHp, sp, maxSp, color }: {
   const hpPct = Math.max(0, (hp / maxHp) * 100);
   const spPct = Math.max(0, (sp / maxSp) * 100);
   const barColor = color === 'cyan' ? 'bg-cyan-500' : 'bg-red-500';
+  const spBarColor = color === 'cyan' ? 'bg-yellow-400' : 'bg-orange-400';
   return (
     <div className="bg-slate-800/60 rounded-xl p-3 border border-slate-700/50">
       <div className="font-bold text-sm mb-1">{label}</div>
-      <div className="text-xs text-gray-400 mb-1">HP {hp}/{maxHp}</div>
+      {/* HP */}
+      <div className="text-xs text-gray-400 mb-0.5">HP {hp}/{maxHp}</div>
       <div className="h-2 bg-slate-900 rounded-full mb-2 overflow-hidden">
         <div className={`h-full ${barColor} transition-all duration-300`} style={{ width: `${hpPct}%` }} />
       </div>
-      <div className="text-xs text-gray-400 mb-1">SP {sp}/{maxSp}</div>
-      <div className="h-1.5 bg-slate-900 rounded-full overflow-hidden">
-        <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${spPct}%` }} />
+      {/* 氣力 — 更突出顯示 */}
+      <div className="flex items-center justify-between text-xs mb-0.5">
+        <span className="text-yellow-300 font-bold">✦ 氣力</span>
+        <span className="text-yellow-300 font-mono font-bold">{sp}/{maxSp}</span>
+      </div>
+      <div className="h-3 bg-slate-900 rounded-full overflow-hidden border border-yellow-600/30">
+        <div className={`h-full ${spBarColor} transition-all duration-300`} style={{ width: `${spPct}%` }} />
+      </div>
+      {/* 氣力格數指示 */}
+      <div className="flex gap-0.5 mt-1">
+        {Array.from({ length: maxSp }, (_, i) => (
+          <div key={i} className={`h-1 flex-1 rounded-sm ${i < sp ? spBarColor : 'bg-slate-700'}`} />
+        ))}
       </div>
     </div>
   );
