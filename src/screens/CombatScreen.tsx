@@ -33,14 +33,14 @@ export function CombatScreen({ character, enemy, onCombatEnd }: Props) {
   const canAttack = s.player.currentSp >= 1;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-3 max-w-2xl mx-auto flex flex-col gap-2">
+    <div className="h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-3 max-w-2xl mx-auto flex flex-col gap-2 overflow-hidden">
       {/* Title */}
-      <div className="text-center">
+      <div className="text-center shrink-0">
         <h1 className="text-base font-bold text-amber-400">⚔️ 戰鬥</h1>
       </div>
 
-      {/* ═══ 敵我 stat — 水平一行 ═══ */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* ═══ 敵我 stat — 固定頂部，唔會被推走 ═══ */}
+      <div className="shrink-0 grid grid-cols-2 gap-3">
         {/* 玩家 */}
         <div className="bg-slate-800/60 rounded-xl px-3 py-2 border border-slate-700/50">
           <div className="font-bold text-xs text-cyan-300">{character.name}</div>
@@ -87,21 +87,17 @@ export function CombatScreen({ character, enemy, onCombatEnd }: Props) {
 
       {/* Enemy info popup on click */}
       {showEnemyInfo && (
-        <div className="bg-slate-800 rounded-xl p-3 border border-amber-500/50 text-xs">
-          <div className="text-amber-400 font-bold mb-1">👹 {enemy.name} 詳情</div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-300">
-            <span>STR {enemy.stats.str}</span>
-            <span>CON {enemy.stats.con}</span>
-            <span>DEX {enemy.stats.dex}</span>
-            <span>PER {enemy.stats.per}</span>
-            <span>INT {enemy.stats.int}</span>
-            <span>WIL {enemy.stats.wil}</span>
+        <div className="shrink-0 bg-slate-800 rounded-xl p-3 border border-amber-500/50 text-xs">
+          <div className="text-amber-400 font-bold mb-1">👹 {enemy.name}</div>
+          <div className="text-gray-300">
+            普攻: {enemy.damageType === 'physical' ? '⚔️物理' : '🔮魔法'} (消耗1氣)
           </div>
-          <div className="text-gray-400 mt-1">
-            普攻: {enemy.damageType === 'physical' ? '⚔️物理 (消耗1氣)' : '🔮魔法 (消耗1氣)'}
-          </div>
-          {enemy.skills.length > 0 && (
-            <div className="text-gray-400">技能: {enemy.skills.join(', ')}</div>
+          {enemy.skills.length > 0 ? (
+            <div className="text-gray-400 mt-1">
+              技能: {enemy.skills.map(s => `• ${s}`).join(' ')}
+            </div>
+          ) : (
+            <div className="text-gray-500 mt-1">沒有特殊技能</div>
           )}
           <div className="text-gray-600 text-[10px] mt-1">點擊關閉</div>
         </div>
